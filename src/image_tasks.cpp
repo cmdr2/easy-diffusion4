@@ -13,9 +13,6 @@ void RenderImageTask::run(sd_ctx_t* ctx) {
     sd_image_t* image = txt2img(ctx, prompt, negative_prompt, 0, 7.5f, 1.0f, width, height,
                                 EULER_A, steps, 42, 1, NULL, 0.0f, 0.0f, false, "");
 
-    sd_image_t* image2 = txt2img(ctx, prompt, negative_prompt, 0, 7.5f, 1.0f, width, height,
-                                EULER_A, steps, 42, 1, NULL, 0.0f, 0.0f, false, "");
-
     if (image == NULL) {
         std::cerr << "txt2img failed." << std::endl;
         free_sd_ctx(ctx);

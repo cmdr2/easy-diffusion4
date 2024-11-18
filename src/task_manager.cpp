@@ -25,7 +25,7 @@ std::string taskStatusToString(TaskStatus status) {
     }
 }
 
-Worker::Worker() {
+Worker::Worker(const std::string& name) : name(name) {
     // Define paths for model files
     const char* model_path = "F:\\models\\stable-diffusion\\sd-v1-5.safetensors";
     // const char* model_path = "F:\\ED4\\server\\miniSD.ckpt";
@@ -51,7 +51,7 @@ Worker::Worker() {
         throw std::exception("Failed to create Stable Diffusion context.");
     }
 
-    std::cout<<"Made the context";
+    std::cout << "Made the context for worker: " << name << std::endl;
 }
 
 void Worker::run(std::queue<std::shared_ptr<Task>>& pendingTasks,
@@ -73,6 +73,7 @@ void Worker::run(std::queue<std::shared_ptr<Task>>& pendingTasks,
         }
 
         try {
+            std::cout << "Worker " << name << " is starting task " << task->taskId << std::endl;
             task->status = TaskStatus::RUNNING;
             task->start_time = std::chrono::system_clock::now();
             task->run(ctx);
@@ -93,7 +94,7 @@ void Worker::run(std::queue<std::shared_ptr<Task>>& pendingTasks,
 
 TaskManager::TaskManager(const std::vector<std::string>& workerNames) : stopFlag(false) {
     for (const auto& name : workerNames) {
-        workers.emplace_back(std::make_unique<Worker>());
+        workers.emplace_back(std::make_unique<Worker>(name));
     }
 
     for (auto& worker : workers) {

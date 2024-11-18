@@ -39,7 +39,7 @@ private:
 public:
     std::string name;
 
-    Worker();
+    Worker(const std::string& name);
     void run(std::queue<std::shared_ptr<Task>>& pendingTasks,
              std::unordered_map<std::string, std::shared_ptr<Task>>& finishedTasks,
              std::mutex& queueMutex,
