@@ -14,15 +14,15 @@
 
 extern const std::chrono::seconds FINISHED_TASK_TTL;
 
-enum class TaskStatus { PENDING, RUNNING, ERROR, FINISHED };
+enum class TaskStatus { PENDING, RUNNING, FAILED, FINISHED };
 
 struct Task {
     std::string taskId;
     TaskStatus status = TaskStatus::PENDING;
     std::shared_ptr<void> input_data;
-    unsigned char* output_data;
-    size_t output_data_size;
+    std::vector<std::vector<unsigned char>> output_data;
     std::string output_data_type;
+    std::string error = "";
 
     std::chrono::system_clock::time_point enqueued_time;
     std::chrono::system_clock::time_point start_time;
@@ -44,16 +44,20 @@ public:
 
     Worker(const std::string& name);
     void run(std::queue<std::shared_ptr<Task>>& pendingTasks,
-             std::unordered_map<std::string, std::shared_ptr<Task>>& finishedTasks,
-             std::mutex& queueMutex,
-             std::condition_variable& taskNotifier,
-             std::atomic<bool>& stopFlag);
+                 std::unordered_map<std::string, std::shared_ptr<Task>>& runningTasks,
+                 std::unordered_map<std::string, std::shared_ptr<Task>>& finishedTasks,
+                 std::unordered_map<std::string, std::shared_ptr<Task>>& pendingTasksMap,
+                 std::mutex& queueMutex,
+                 std::condition_variable& taskNotifier,
+                 std::atomic<bool>& stopFlag);
 };
 
 class TaskManager {
 private:
     std::vector<std::unique_ptr<Worker>> workers;
     std::queue<std::shared_ptr<Task>> pendingTasks;
+    std::unordered_map<std::string, std::shared_ptr<Task>> pendingTasksMap;
+    std::unordered_map<std::string, std::shared_ptr<Task>> runningTasks;
     std::unordered_map<std::string, std::shared_ptr<Task>> finishedTasks;
     std::mutex queueMutex;
     std::condition_variable taskNotifier;
@@ -66,7 +70,8 @@ public:
     ~TaskManager();
 
     void addTask(std::shared_ptr<Task> task);
-    std::shared_ptr<Task> getFinishedTask(const std::string& taskId);
+    std::shared_ptr<Task> getTask(const std::string& taskId);
 };
+
 
 #endif // TASK_MANAGER_H

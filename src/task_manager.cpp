@@ -16,8 +16,8 @@ std::string taskStatusToString(TaskStatus status) {
             return "PENDING";
         case TaskStatus::RUNNING:
             return "RUNNING";
-        case TaskStatus::ERROR:
-            return "ERROR";
+        case TaskStatus::FAILED:
+            return "FAILED";
         case TaskStatus::FINISHED:
             return "FINISHED";
         default:
@@ -55,7 +55,9 @@ Worker::Worker(const std::string& name) : name(name) {
 }
 
 void Worker::run(std::queue<std::shared_ptr<Task>>& pendingTasks,
+                 std::unordered_map<std::string, std::shared_ptr<Task>>& runningTasks,
                  std::unordered_map<std::string, std::shared_ptr<Task>>& finishedTasks,
+                 std::unordered_map<std::string, std::shared_ptr<Task>>& pendingTasksMap,
                  std::mutex& queueMutex,
                  std::condition_variable& taskNotifier,
                  std::atomic<bool>& stopFlag) {
@@ -70,6 +72,8 @@ void Worker::run(std::queue<std::shared_ptr<Task>>& pendingTasks,
 
             task = pendingTasks.front();
             pendingTasks.pop();
+            pendingTasksMap.erase(task->taskId);  // Remove from pending tasks map
+            runningTasks[task->taskId] = task;   // Add to running tasks
         }
 
         try {
@@ -79,22 +83,20 @@ void Worker::run(std::queue<std::shared_ptr<Task>>& pendingTasks,
             task->run(ctx);
             task->status = TaskStatus::FINISHED;
         } catch (const std::exception& e) {
-            task->status = TaskStatus::ERROR;
-            std::cout<<"Error while executing task: "<<e.what()<<std::endl;
-            std::string str = "Error while executing task";
-            task->output_data = reinterpret_cast<unsigned char*>("Error while executing task");
-            task->output_data_size = str.length();
-            task->output_data_type = "text/plain";
+            task->status = TaskStatus::FAILED;
+            task->error = "Error while executing task: " + std::string(e.what());
         }
 
         task->finished_time = std::chrono::system_clock::now();
 
         {
             std::lock_guard<std::mutex> lock(queueMutex);
-            finishedTasks[task->taskId] = task;
+            runningTasks.erase(task->taskId);  // Remove from running tasks
+            finishedTasks[task->taskId] = task; // Move to finished tasks
         }
     }
 }
+
 
 TaskManager::TaskManager(const std::vector<std::string>& workerNames) : stopFlag(false) {
     for (const auto& name : workerNames) {
@@ -103,7 +105,7 @@ TaskManager::TaskManager(const std::vector<std::string>& workerNames) : stopFlag
 
     for (auto& worker : workers) {
         std::thread([worker = worker.get(), this]() {
-            worker->run(pendingTasks, finishedTasks, queueMutex, taskNotifier, stopFlag);
+            worker->run(pendingTasks, runningTasks, finishedTasks, pendingTasksMap, queueMutex, taskNotifier, stopFlag);
         }).detach();
     }
 }
@@ -117,18 +119,34 @@ void TaskManager::addTask(std::shared_ptr<Task> task) {
     {
         std::lock_guard<std::mutex> lock(queueMutex);
         pendingTasks.push(task);
+        pendingTasksMap[task->taskId] = task;
     }
     taskNotifier.notify_one();
 }
 
-std::shared_ptr<Task> TaskManager::getFinishedTask(const std::string& taskId) {
-    cleanupFinishedTasks();
+
+std::shared_ptr<Task> TaskManager::getTask(const std::string& taskId) {
     std::lock_guard<std::mutex> lock(queueMutex);
-    auto it = finishedTasks.find(taskId);
-    if (it != finishedTasks.end()) {
-        return it->second;
+
+    // Check running tasks
+    auto runningIt = runningTasks.find(taskId);
+    if (runningIt != runningTasks.end()) {
+        return runningIt->second;
     }
-    return nullptr;
+
+    // Check finished tasks
+    auto finishedIt = finishedTasks.find(taskId);
+    if (finishedIt != finishedTasks.end()) {
+        return finishedIt->second;
+    }
+
+    // Check pending tasks (store pending tasks in an unordered_map for efficient lookup)
+    auto pendingIt = pendingTasksMap.find(taskId);
+    if (pendingIt != pendingTasksMap.end()) {
+        return pendingIt->second;
+    }
+
+    return nullptr; // Task not found
 }
 
 void TaskManager::cleanupFinishedTasks() {

@@ -71,33 +71,16 @@ double toSecondsSinceEpochDouble(const std::chrono::system_clock::time_point& tp
     return std::chrono::duration_cast<std::chrono::duration<double>>(tp.time_since_epoch()).count();
 }
 
-// Custom write callback function to handle large image data
-void write_png_callback(void* context, void* data, int size) {
-    // Cast context to a pointer to a struct that holds the buffer and its size
-    auto* buffer_info = static_cast<std::pair<unsigned char*, size_t>*>(context);
-    unsigned char* buffer = buffer_info->first;
-    size_t current_size = buffer_info->second;
+std::vector<unsigned char> convert_to_png_buffer(const unsigned char* image_data, int width, int height, int channels) {
+    std::vector<unsigned char> png_buffer;
 
-    // Copy the data into the allocated buffer
-    std::memcpy(buffer + current_size, data, size);
-    buffer_info->second += size; // Update the current size
-}
+    // Write PNG using a custom callback to populate the vector
+    stbi_write_png_to_func(
+        [](void* context, void* data, int size) {
+            auto* buffer = static_cast<std::vector<unsigned char>*>(context);
+            buffer->insert(buffer->end(), static_cast<unsigned char*>(data), static_cast<unsigned char*>(data) + size);
+        },
+        &png_buffer, width, height, channels, image_data, width * channels);
 
-// Function to convert raw image data to a PNG buffer
-unsigned char* convert_to_png_buffer(const unsigned char* image_data, int width, int height, int channels, size_t& out_size) {
-    // Estimate maximum PNG size (this is a rough estimate)
-    size_t max_png_size = width * height * channels + 12; // Add some extra space for headers etc.
-
-    // Allocate memory for the PNG buffer
-    unsigned char* png_buffer = new unsigned char[max_png_size];
-
-    // Initialize a struct to hold the buffer and its current size
-    std::pair<unsigned char*, size_t> buffer_info = { png_buffer, 0 };
-
-    // Write the PNG image into the allocated buffer
-    stbi_write_png_to_func(write_png_callback, &buffer_info, width, height, channels, image_data, width * channels);
-
-    out_size = buffer_info.second; // Set output size to the actual written size
-
-    return png_buffer; // Return the allocated PNG buffer
+    return png_buffer; // Return the vector containing PNG data
 }

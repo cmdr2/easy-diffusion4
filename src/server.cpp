@@ -44,7 +44,7 @@ void Server::start() {
     });
 
     CROW_ROUTE(app, "/api/tasks/<string>")([&](const std::string& task_id) {
-        auto task = taskManager.getFinishedTask(task_id);
+        auto task = taskManager.getTask(task_id);
         if (!task) return crow::response(404);
 
         crow::json::wvalue result{
@@ -53,30 +53,71 @@ void Server::start() {
             {"enqueued_time", toSecondsSinceEpochDouble(task->enqueued_time)}
         };
 
-        if (task->status != TaskStatus::PENDING) {
-            result["start_time"] = toSecondsSinceEpochDouble(task->start_time);
+        if (task->status == TaskStatus::PENDING) {
+            return crow::response(result.dump());
+        }
 
-            if (task->status != TaskStatus::RUNNING) {
-                result["finished_time"] = toSecondsSinceEpochDouble(task->finished_time);
-                result["time_taken"] = toSecondsSinceEpochDouble(task->finished_time) - toSecondsSinceEpochDouble(task->start_time);
-            }
+        result["start_time"] = toSecondsSinceEpochDouble(task->start_time);
+
+        if (task->status == TaskStatus::FAILED) {
+            result["error"] = task->error;
+        } else if (task->status == TaskStatus::RUNNING) {
+            result["outputs"] = "/api/tasks/" + task_id + "/outputs";
+        } else { // FINISHED
+            result["finished_time"] = toSecondsSinceEpochDouble(task->finished_time);
+            result["time_taken"] = toSecondsSinceEpochDouble(task->finished_time) - toSecondsSinceEpochDouble(task->start_time);
         }
 
         return crow::response(result.dump());
     });
 
-    CROW_ROUTE(app, "/api/tasks/<string>/artifacts")([&](const std::string& task_id) {
-        auto task = taskManager.getFinishedTask(task_id);
-        if (!task || task->status != TaskStatus::FINISHED) {
+
+    // Route to list all outputs for a given task
+    CROW_ROUTE(app, "/api/tasks/<string>/outputs")([&](const std::string& task_id) {
+        auto task = taskManager.getTask(task_id);
+        if (!task || task->status == TaskStatus::PENDING || task->status == TaskStatus::FAILED) {
             return crow::response(404);
+        }
+
+        if (task->output_data.empty()) {
+            return crow::response(404);
+        }
+
+        crow::json::wvalue output_list = crow::json::wvalue::list();
+        for (size_t i = 0; i < task->output_data.size(); ++i) {
+            output_list[i] = "/api/tasks/" + task_id + "/outputs/" + std::to_string(i);
+        }
+
+        return crow::response(200, output_list.dump());
+    });
+
+
+    // Route to fetch a specific output based on output_id
+    CROW_ROUTE(app, "/api/tasks/<string>/outputs/<int>")([&](const std::string& task_id, int output_id) {
+        auto task = taskManager.getTask(task_id);
+        if (!task || task->status == TaskStatus::PENDING || task->status == TaskStatus::FAILED) {
+            return crow::response(404);
+        }
+
+        // Check if output_data is unassigned or empty
+        if (task->output_data.empty()) {
+            return crow::response(404);
+        }
+
+        if (output_id < 0 || output_id >= static_cast<int>(task->output_data.size())) {
+            return crow::response(400, "Invalid output ID");
         }
 
         crow::response res(200);
         res.set_header("Content-Type", task->output_data_type);
-        res.body.assign(reinterpret_cast<char*>(task->output_data), task->output_data_size);
+        res.body.assign(
+            reinterpret_cast<const char*>(task->output_data[output_id].data()),
+            task->output_data[output_id].size()
+        );
 
         return res;
     });
+
 
     std::thread([&]() {
         // Delay to ensure server starts before opening browser
