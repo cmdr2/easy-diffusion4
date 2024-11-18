@@ -21,8 +21,23 @@ void Server::start() {
         return res;
     });
 
-    CROW_ROUTE(app, "/api/tasks").methods("POST"_method)([&]() {
-        auto task = std::make_shared<RenderImageTask>();
+    CROW_ROUTE(app, "/api/tasks").methods("POST"_method)([&](const crow::request& req) {
+        auto json = crow::json::load(req.body);
+        if (!json) return crow::response(400, "Invalid JSON");
+
+        std::shared_ptr<Task> task;
+
+        std::string type = json["type"].s();
+        if (type == "generate_image") {
+            GenerateImageInputData generateRequest = GenerateImageInputData::deserialize(json);
+            task = std::make_shared<GenerateImageTask>(generateRequest);
+        } else if (type == "filter_image") {
+            FilterImageInputData filterRequest = FilterImageInputData::deserialize(json);
+            task = std::make_shared<FilterImageTask>(filterRequest);
+        } else {
+            return crow::response(400, "Unknown task type");
+        }
+
         taskManager.addTask(task);
         crow::json::wvalue result{{"taskId", task->taskId}};
         return crow::response(result.dump());
@@ -47,18 +62,20 @@ void Server::start() {
             }
         }
 
-        if (task->status != TaskStatus::PENDING) {
-            result["artifacts"] = "/api/tasks/" + task->taskId + "/artifacts";
-        }
-
         return crow::response(result.dump());
     });
 
     CROW_ROUTE(app, "/api/tasks/<string>/artifacts")([&](const std::string& task_id) {
         auto task = taskManager.getFinishedTask(task_id);
-        if (!task || task->status != TaskStatus::FINISHED) return crow::response(404);
+        if (!task || task->status != TaskStatus::FINISHED) {
+            return crow::response(404);
+        }
 
-        return crow::response(task->responseData);
+        crow::response res(200);
+        res.set_header("Content-Type", task->output_data_type);
+        res.body.assign(reinterpret_cast<char*>(task->output_data), task->output_data_size);
+
+        return res;
     });
 
     std::thread([&]() {

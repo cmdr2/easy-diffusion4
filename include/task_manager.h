@@ -19,7 +19,10 @@ enum class TaskStatus { PENDING, RUNNING, ERROR, FINISHED };
 struct Task {
     std::string taskId;
     TaskStatus status = TaskStatus::PENDING;
-    std::string responseData;
+    std::shared_ptr<void> input_data;
+    unsigned char* output_data;
+    size_t output_data_size;
+    std::string output_data_type;
 
     std::chrono::system_clock::time_point enqueued_time;
     std::chrono::system_clock::time_point start_time;

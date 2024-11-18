@@ -80,7 +80,11 @@ void Worker::run(std::queue<std::shared_ptr<Task>>& pendingTasks,
             task->status = TaskStatus::FINISHED;
         } catch (const std::exception& e) {
             task->status = TaskStatus::ERROR;
-            task->responseData = "Error while executing task: " + std::string(e.what());
+            std::cout<<"Error while executing task: "<<e.what()<<std::endl;
+            std::string str = "Error while executing task";
+            task->output_data = reinterpret_cast<unsigned char*>("Error while executing task");
+            task->output_data_size = str.length();
+            task->output_data_type = "text/plain";
         }
 
         task->finished_time = std::chrono::system_clock::now();
