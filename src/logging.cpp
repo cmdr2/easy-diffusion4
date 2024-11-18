@@ -1,14 +1,9 @@
-#include "stable-diffusion.h"
 #include <iostream>
-#include <iomanip>
-#include <chrono>
-#include <ctime>
-#include <sstream>
+#include "stable-diffusion.h"
+#include "util.h"
 
 const int MIN_LOG_LEVEL = SD_LOG_DEBUG;
 const bool COLOR_LOGGING = true;
-
-std::string get_local_time();
 
 /* Enables Printing the log level tag in color using ANSI escape codes */
 void sd_log_cb(enum sd_log_level_t level, const char* log, void* data) {
@@ -52,23 +47,4 @@ void sd_log_cb(enum sd_log_level_t level, const char* log, void* data) {
     }
     fputs(log, out_stream);
     fflush(out_stream);
-}
-
-// Function to get the current local time as a formatted string
-std::string get_local_time() {
-    // Get the current time
-    auto now = std::chrono::system_clock::now();
-    auto now_time_t = std::chrono::system_clock::to_time_t(now);
-    std::tm tm_time;
-    localtime_s(&tm_time, &now_time_t);  // Use localtime_s() for thread-safety on Windows
-
-    // Get the milliseconds part
-    auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-
-    // Use a stringstream to format the time
-    std::ostringstream oss;
-    oss << std::put_time(&tm_time, "%H:%M:%S")   // Format hours, minutes, and seconds
-        << '.' << std::setw(3) << std::setfill('0') << milliseconds.count();  // Add milliseconds
-
-    return oss.str();  // Return the formatted string
 }

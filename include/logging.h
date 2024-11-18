@@ -4,6 +4,5 @@
 #include <iostream>
 
 void sd_log_cb(enum sd_log_level_t level, const char* log, void* data);
-std::string get_local_time();
 
 #endif

@@ -22,6 +22,8 @@ add_subdirectory(stable-diffusion.cpp)
 file(GLOB_RECURSE ED_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 add_executable(easy-diffusion ${ED_SRC})
 
+target_include_directories(easy-diffusion PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 target_link_libraries(easy-diffusion PRIVATE ggml)
 target_link_libraries(easy-diffusion PRIVATE stable-diffusion)
 
