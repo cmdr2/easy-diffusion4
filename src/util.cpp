@@ -2,14 +2,17 @@
 #include <chrono>
 #include <ctime>
 #include <sstream>
-#include <uuid/uuid.h>
+#include <uuid_v4.hpp>
+#include <cstdlib>
 
-std::string generateTaskId() {
-    uuid_t uuid;
-    uuid_generate_random(uuid);
-    char uuidStr[37];
-    uuid_unparse(uuid, uuidStr);
-    return std::string(uuidStr);
+UUIDv4::UUIDGenerator<std::mt19937_64> uuidGenerator;
+
+std::string generate_uuid() {
+    // Generate a UUID v4 using the uuid_v4 library
+    auto uuid = uuidGenerator.getUUID();
+
+    // Convert the UUID to a string representation
+    return uuid.str();
 }
 
 // Function to get the current local time as a formatted string
@@ -41,4 +44,25 @@ std::string get_local_time() {
         << '.' << std::setw(3) << std::setfill('0') << milliseconds.count();  // Add milliseconds
 
     return oss.str();  // Return the formatted string
+}
+
+void openInDefaultBrowser(const std::string& url) {
+#ifdef _WIN32
+    std::string command = "start " + url;
+    system(command.c_str());
+#elif __APPLE__
+    std::string command = "open " + url;
+    system(command.c_str());
+#elif __linux__
+    std::string command = "xdg-open " + url;
+    system(command.c_str());
+#endif
+}
+
+long toSecondsSinceEpochLong(const std::chrono::system_clock::time_point& tp) {
+    return std::chrono::duration_cast<std::chrono::seconds>(tp.time_since_epoch()).count();
+}
+
+double toSecondsSinceEpochDouble(const std::chrono::system_clock::time_point& tp) {
+    return std::chrono::duration_cast<std::chrono::duration<double>>(tp.time_since_epoch()).count();
 }

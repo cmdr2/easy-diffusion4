@@ -4,8 +4,8 @@ Experiments for a fast and lightweight Easy Diffusion (for version 4.0). Uses [s
 ### CPU-only compile:
 
 ```
-cmake
-cmake --build . --config Release
+cmake -B build
+cmake --build build --config Release
 ```
 
 ### CUDA compile:
@@ -16,12 +16,12 @@ It only works with MSVC, since it requires `cl.exe`. Installed Visual Studio Com
 
 Compiled using:
 ```
-cmake -DSD_CUBLAS=ON
-cmake --build . --config Release
+cmake -B build -DSD_CUBLAS=ON
+cmake --build build --config Release
 ```
 
 ## Run
 
-You can run `sd2.exe`, which will load the model from the hard-coded path in `src/main.cpp`, and generate a test image.
+You can run `build/bin/easy-diffusion`, which will load the model from the hard-coded path in `src/main.cpp`, and generate a test image.
 
 It doesn't save the image to disk currently, since this is currently just an experiment to see if things work together.

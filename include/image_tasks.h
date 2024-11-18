@@ -5,12 +5,12 @@
 
 class RenderImageTask : public Task {
 public:
-    void run(sd_ctx_t& ctx) override;
+    void run(sd_ctx_t* ctx) override;
 };
 
 class FilterImageTask : public Task {
 public:
-    void run(sd_ctx_t& ctx) override;
+    void run(sd_ctx_t* ctx) override;
 };
 
 #endif // IMAGE_TASKS_H
