@@ -8,7 +8,7 @@
 int main(int argc, char* argv[]) {
     sd_set_log_callback(sd_log_cb, NULL);
 
-    TaskManager manager({"Worker1", "Worker2", "Worker3"});
+    TaskManager manager({"Worker1"});
     Server server(manager);
 
     server.start();
