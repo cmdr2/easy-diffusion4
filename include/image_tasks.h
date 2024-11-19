@@ -4,7 +4,7 @@
 #include "task_manager.h"
 #include "crow.h"
 
-struct GenerateImageInputData {
+struct GenerateImageInputData : InputData {
     std::string prompt = "";
     std::string negative_prompt = "";
     int seed = 42;
@@ -33,7 +33,7 @@ struct GenerateImageInputData {
     }
 };
 
-struct FilterImageInputData {
+struct FilterImageInputData : InputData {
     std::string filter_name;
 
     // Deserialize with default values if keys are missing

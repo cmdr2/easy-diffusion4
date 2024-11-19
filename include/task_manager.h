@@ -16,10 +16,12 @@ extern const std::chrono::seconds FINISHED_TASK_TTL;
 
 enum class TaskStatus { PENDING, RUNNING, FAILED, FINISHED };
 
+struct InputData {};
+
 struct Task {
     std::string taskId;
     TaskStatus status = TaskStatus::PENDING;
-    std::shared_ptr<void> input_data;
+    std::shared_ptr<InputData> input_data;
     std::vector<std::vector<unsigned char>> output_data;
     std::string output_data_type;
     std::string error = "";
