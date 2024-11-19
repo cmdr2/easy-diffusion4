@@ -2,21 +2,17 @@
 #include <chrono>
 #include <ctime>
 #include <sstream>
-#include <uuid_v4.hpp>
+#include <uuid.h>
 #include <cstdlib>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_STATIC
 #include "stb_image_write.h"
 
-UUIDv4::UUIDGenerator<std::mt19937_64> uuidGenerator;
-
 std::string generate_uuid() {
-    // Generate a UUID v4 using the uuid_v4 library
-    auto uuid = uuidGenerator.getUUID();
+    auto uuid = uuid::v4::UUID::New();
 
-    // Convert the UUID to a string representation
-    return uuid.str();
+    return uuid.String();
 }
 
 // Function to get the current local time as a formatted string
