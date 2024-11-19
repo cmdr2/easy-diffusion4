@@ -71,6 +71,7 @@ void generate_image_step_callback(size_t number, size_t step, uint8_t* image_dat
 
     task->progress = (double)steps_complete / total_steps;
 
+    // TODO - think about using fast preview or taesd - https://github.com/leejet/stable-diffusion.cpp/pull/454/files
     if (image_data != nullptr) {
         int width = req->width;
         int height = req->height;
