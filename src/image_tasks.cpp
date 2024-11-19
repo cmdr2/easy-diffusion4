@@ -23,7 +23,7 @@ void GenerateImageTask::run(sd_ctx_t* ctx) {
     task_ctx->ctx = ctx;
     task_ctx->task = this;
 
-    sd_ctx_set_result_step_callback(ctx, generate_image_step_callback, CALLBACK_IMAGE_PREVIEW_INTERVAL, &task_ctx);
+    sd_set_result_step_callback(ctx, generate_image_step_callback, CALLBACK_IMAGE_PREVIEW_INTERVAL, &task_ctx);
 
     // populate the output buffer with dummy data
     for (int i = 0; i < req->batch_count; ++i) {
