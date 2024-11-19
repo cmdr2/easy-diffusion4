@@ -21,6 +21,7 @@ struct InputData {};
 struct Task {
     std::string taskId;
     TaskStatus status = TaskStatus::PENDING;
+    double progress = 0.0;
     std::shared_ptr<InputData> input_data;
     std::vector<std::vector<unsigned char>> output_data;
     std::string output_data_type;

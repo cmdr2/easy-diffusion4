@@ -67,16 +67,17 @@ double toSecondsSinceEpochDouble(const std::chrono::system_clock::time_point& tp
     return std::chrono::duration_cast<std::chrono::duration<double>>(tp.time_since_epoch()).count();
 }
 
-std::vector<unsigned char> convert_to_png_buffer(const unsigned char* image_data, int width, int height, int channels) {
-    std::vector<unsigned char> png_buffer;
+std::vector<unsigned char> convert_to_image_buffer(const unsigned char* image_data, std::string format, int width, int height, int channels) {
+    std::vector<unsigned char> image_buffer;
 
-    // Write PNG using a custom callback to populate the vector
-    stbi_write_png_to_func(
+    auto write_func = format == "png" ? stbi_write_png_to_func : stbi_write_jpg_to_func;
+
+    write_func(
         [](void* context, void* data, int size) {
             auto* buffer = static_cast<std::vector<unsigned char>*>(context);
             buffer->insert(buffer->end(), static_cast<unsigned char*>(data), static_cast<unsigned char*>(data) + size);
         },
-        &png_buffer, width, height, channels, image_data, width * channels);
+        &image_buffer, width, height, channels, image_data, width * channels);
 
-    return png_buffer; // Return the vector containing PNG data
+    return image_buffer;
 }

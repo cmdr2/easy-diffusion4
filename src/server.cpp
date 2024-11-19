@@ -50,6 +50,7 @@ void Server::start() {
         crow::json::wvalue result{
             {"taskId", task->taskId},
             {"status", taskStatusToString(task->status)},
+            {"progress", task->progress},
             {"enqueued_time", toSecondsSinceEpochDouble(task->enqueued_time)}
         };
 

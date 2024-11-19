@@ -10,6 +10,6 @@ std::string generate_uuid();
 void openInDefaultBrowser(const std::string& url);
 long toSecondsSinceEpochLong(const std::chrono::system_clock::time_point& tp);
 double toSecondsSinceEpochDouble(const std::chrono::system_clock::time_point& tp);
-std::vector<unsigned char> convert_to_png_buffer(const unsigned char* image_data, int width, int height, int channels);
+std::vector<unsigned char> convert_to_image_buffer(const unsigned char* image_data, std::string format, int width, int height, int channels);
 
 #endif
