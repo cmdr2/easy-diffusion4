@@ -16,7 +16,7 @@ void GenerateImageTask::run(sd_ctx_t* ctx) {
     if (images == NULL) {
         std::cerr << "txt2img failed." << std::endl;
         free_sd_ctx(ctx);
-        throw std::exception("txt2img failed");
+        throw std::runtime_error("txt2img failed");
     }
 
     std::cout << "Generated images: " << req->batch_count << " images of size "

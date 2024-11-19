@@ -48,7 +48,7 @@ Worker::Worker(const std::string& name) : name(name) {
 
     if (ctx == NULL) {
         std::cerr << "Failed to create Stable Diffusion context." << std::endl;
-        throw std::exception("Failed to create Stable Diffusion context.");
+        throw std::runtime_error("Failed to create Stable Diffusion context.");
     }
 
     std::cout << "Made the context for worker: " << name << std::endl;
