@@ -28,6 +28,9 @@ target_include_directories(easy-diffusion PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/th
 target_link_libraries(easy-diffusion PRIVATE ggml)
 target_link_libraries(easy-diffusion PRIVATE stable-diffusion)
 
+# avoid compiler warnings, target Windows XP and later
+add_definitions(-D_WIN32_WINNT=0x0601)
+
 # Copy the necessary DLLs to the runtime output directory
 add_custom_command(TARGET easy-diffusion POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
