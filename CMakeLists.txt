@@ -15,6 +15,33 @@ set(BUILD_SHARED_LIBS ON CACHE BOOL "Build ggml as a shared library")
 set(SD_BUILD_SHARED_LIBS ON CACHE BOOL "Build stable-diffusion as a shared library")
 set(SD_BUILD_SHARED_GGML_LIB ON CACHE BOOL "Build ggml as a separate shared library")
 
+### ---- HACK FOR DISABLING abort on GGML_ASSERT failures
+
+# This is applied when cmake is run initially to create the build dir. For e.g. cmake -B build
+
+# Define the path to your dependency
+set(GGML_DIR "${CMAKE_SOURCE_DIR}/stable-diffusion.cpp/ggml")
+
+# Function to apply the patch
+function(apply_patch)
+    execute_process(
+        COMMAND git apply ${CMAKE_SOURCE_DIR}/patches/ggml-hack-don-t-abort-the-program-when-GGML_ASSERT-fails.patch
+        WORKING_DIRECTORY ${GGML_DIR}
+        RESULT_VARIABLE PATCH_RESULT
+    )
+
+    if(PATCH_RESULT EQUAL 0)
+        message(STATUS "Patch applied successfully.")
+    else()
+        message(WARNING "Failed to apply patch. Error code: ${PATCH_RESULT}")
+    endif()
+endfunction()
+
+# Apply the patch before adding the subdirectory
+apply_patch()
+
+### ---- /HACK
+
 # Include stable-diffusion.cpp
 add_subdirectory(stable-diffusion.cpp)
 

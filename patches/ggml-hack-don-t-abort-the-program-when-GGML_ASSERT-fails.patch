@@ -1,0 +1,25 @@
+From 1689bdc5ce7a15faeb3ccfbd288512d5786eed3b Mon Sep 17 00:00:00 2001
+From: cmdr2 <secondary.cmdr2@gmail.com>
+Date: Tue, 19 Nov 2024 20:08:39 +0530
+Subject: [PATCH] hack: don't abort the program when GGML_ASSERT fails
+
+---
+ include/ggml.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/ggml.h b/include/ggml.h
+index b11d047..dd76bb4 100644
+--- a/include/ggml.h
++++ b/include/ggml.h
+@@ -275,7 +275,7 @@
+ #endif
+ 
+ #define GGML_ABORT(...) ggml_abort(__FILE__, __LINE__, __VA_ARGS__)
+-#define GGML_ASSERT(x) if (!(x)) GGML_ABORT("GGML_ASSERT(%s) failed", #x)
++#define GGML_ASSERT(x) if (!(x)) fprintf(stderr, "GGML_ASSERT(%s) failed!\n", #x)
+ 
+ // used to copy the number of elements and stride in bytes of tensors into local variables.
+ // main purpose is to reduce code duplication and improve readability.
+-- 
+2.37.1.windows.1
+
